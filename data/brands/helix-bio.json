@@ -1,0 +1,16 @@
+{
+  "client_id": "helix-bio",
+  "display_name": "Helix Bio",
+  "colors": {
+    "primary": "#7fd1c4",
+    "secondary": "#f2c94c",
+    "background": "#ffffff",
+    "surface": "#fbfbfb",
+    "text": "#333333",
+    "muted_text": "#b0b0b0"
+  },
+  "typography": {"heading_font": "Poppins", "body_font": "Poppins", "base_size_px": 15},
+  "radius_px": 12,
+  "logo_url": "http://cdn.example.com/helix-logo.svg",
+  "components": ["header", "share_price_ticker", "news_list", "contact_card"]
+}

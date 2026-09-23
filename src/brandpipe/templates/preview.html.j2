@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="{{ brand.locale[:2] }}">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ brand.display_name }} · component preview</title>
+<link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="components.css">
+<style>body{margin:0;padding:24px}</style>
+</head>
+<body class="brand-{{ brand.client_id }} bp-root">
+{% for html in components %}{{ html }}
+{% endfor %}
+</body>
+</html>

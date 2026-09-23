@@ -1,0 +1,15 @@
+{
+  "client_id": "aurora-minerals",
+  "display_name": "Aurora Minerals",
+  "colors": {
+    "primary": "#0b3d5c",
+    "secondary": "#d4a017",
+    "background": "#ffffff",
+    "surface": "#f5f7f9",
+    "text": "#1b1f24",
+    "muted_text": "#5b6570"
+  },
+  "typography": {"heading_font": "Merriweather", "body_font": "Inter", "base_size_px": 16},
+  "radius_px": 4,
+  "components": ["header", "share_price_ticker", "news_list", "events_calendar", "contact_card"]
+}

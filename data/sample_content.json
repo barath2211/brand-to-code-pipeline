@@ -1,0 +1,14 @@
+{
+  "share": {"price": "142.30", "currency": "EUR", "change": 1.85, "change_pct": 1.32, "exchange": "Example Exchange", "symbol": "DEMO"},
+  "news": [
+    {"category": "Results", "headline": "Half-year report published", "date": "2026-08-14"},
+    {"category": "Governance", "headline": "Notice of extraordinary general meeting", "date": "2026-07-30"},
+    {"category": "Press", "headline": "New regional office opens", "date": "2026-07-02"}
+  ],
+  "events": [
+    {"date": "2026-11-06", "title": "Q3 interim report"},
+    {"date": "2027-02-12", "title": "Full-year results"},
+    {"date": "2027-04-22", "title": "Annual general meeting"}
+  ],
+  "contact": {"name": "Alex Morgan", "role": "Head of Investor Relations"}
+}

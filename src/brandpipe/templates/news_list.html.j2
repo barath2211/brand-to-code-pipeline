@@ -1,0 +1,8 @@
+<section class="bp-card" aria-labelledby="news-{{ brand.client_id }}">
+  <h2 id="news-{{ brand.client_id }}">Latest news</h2>
+  <ul class="bp-list">
+  {% for item in content.news %}
+    <li><span class="bp-tag">{{ item.category }}</span> <a href="#">{{ item.headline }}</a><br><span class="bp-muted">{{ item.date }}</span></li>
+  {% endfor %}
+  </ul>
+</section>

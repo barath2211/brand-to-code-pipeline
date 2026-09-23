@@ -1,0 +1,8 @@
+<section class="bp-card" aria-labelledby="sp-{{ brand.client_id }}">
+  <h2 id="sp-{{ brand.client_id }}">Share price</h2>
+  <div class="bp-ticker">
+    <span class="bp-price">{{ content.share.price }} {{ content.share.currency }}</span>
+    <span class="{{ 'bp-up' if content.share.change >= 0 else 'bp-down' }}">{{ '%+.2f' % content.share.change }} ({{ '%+.2f' % content.share.change_pct }}%)</span>
+  </div>
+  <p class="bp-muted">{{ content.share.exchange }}: {{ content.share.symbol }} · delayed 15 min</p>
+</section>

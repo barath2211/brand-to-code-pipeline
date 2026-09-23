@@ -1,0 +1,34 @@
+{
+  "ollama": {
+    "default": "gemma2:9b",
+    "classifier": "gemma2:2b",
+    "reasoning": "deepseek-r1:8b",
+    "code": "qwen2.5-coder:7b",
+    "writer": "gemma2:9b",
+    "embed": "nomic-embed-text"
+  },
+  "openai": {
+    "default": "gpt-4o-mini",
+    "classifier": "gpt-4o-mini",
+    "reasoning": "gpt-4o-mini",
+    "code": "gpt-4o-mini",
+    "writer": "gpt-4o-mini",
+    "embed": "text-embedding-3-small"
+  },
+  "anthropic": {
+    "default": "claude-haiku-4-5",
+    "classifier": "claude-haiku-4-5",
+    "reasoning": "claude-haiku-4-5",
+    "code": "claude-haiku-4-5",
+    "writer": "claude-haiku-4-5",
+    "embed": "local-hashed"
+  },
+  "mock": {
+    "default": "mock-rules-v1",
+    "classifier": "mock-classifier",
+    "reasoning": "mock-reasoner",
+    "code": "mock-code-inspector",
+    "writer": "mock-writer",
+    "embed": "mock-hashed-256"
+  }
+}
