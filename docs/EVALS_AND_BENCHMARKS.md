@@ -20,10 +20,11 @@ The business outcome is lead time. The things that drive it are: how often the f
 | Aurora Minerals | JSON | PASS | n/a | none | ~10 ms |
 | Helix Bio | JSON | FAIL (3) | PASS on attempt 2 | muted text `#b0b0b0` to `#727272` (2.17:1 to 4.81:1), logo http to https | ~3 ms |
 | Nordlys Energy | Guideline text | PASS | n/a | none; 6/6 colours, fonts and radius extracted correctly | ~2 ms |
+| Kestrel Logistics | PDF brand book | FAIL (2) | PASS on attempt 2 | muted text `#8a948f` to `#686f6b`; brand name, 6/6 colours, fonts and radius read from the PDF | ~60 ms |
 
 Helix Bio's primary colour (`#7fd1c4`) only reaches 1.72:1 as link text. The pipeline left the brand colour alone and derived a link shade (`#4c7d76`, 4.51:1) instead.
 
-Honest caveat: three brands is a demo, not an eval set. The mock extractor is regex written for the sample guideline, so its perfect score proves the plumbing, not model quality.
+Honest caveat: four brands is a demo, not an eval set. The mock extractor is regex written for the sample guideline, so its perfect score proves the plumbing, not model quality.
 
 ## Running extraction evals against a real model
 

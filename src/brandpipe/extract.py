@@ -47,7 +47,7 @@ def _mock_extract(text: str) -> dict:
     fonts = re.findall(r'"([^"]+)"', text)
     size = re.search(r"(\d{2})px", text)
     radius = re.search(r"rounded[^\d]*(\d+)px", text.lower())
-    title = re.search(r"^#\s*(.+?) brand", text, flags=re.MULTILINE)
+    title = re.search(r"^(?:#\s*)?(.+?) brand guidelines", text, flags=re.MULTILINE | re.IGNORECASE)
     cfg = {
         "display_name": title.group(1).strip() if title else "Unnamed brand",
         "colors": {k: v.lower() for k, v in colors.items()},

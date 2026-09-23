@@ -37,7 +37,7 @@ def main() -> None:
     sub.add_parser("build-all")
     for p in (b, sub.choices["build-all"]):
         p.add_argument("--auto-fix", action="store_true")
-        p.add_argument("--provider", choices=["mock", "ollama", "openai", "anthropic"])
+        p.add_argument("--provider", choices=["mock", "ollama", "ollama-small", "openai", "gemini", "anthropic"])
     args = ap.parse_args()
 
     pipe = BrandPipeline(args.provider)

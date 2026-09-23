@@ -37,7 +37,7 @@ New clients need a set of embeddable web components styled to their brand. Today
 **Non-goals**
 - Designing new components. The component library is fixed; only styling is per client.
 - Changing a client's core brand colours without a human decision.
-- Parsing PDFs or images of brand books (v2; text only for now).
+- Scanned (image-only) brand books. Text-based PDFs are supported; scans need OCR or a vision model (v2).
 
 ## 5. User stories and acceptance criteria
 

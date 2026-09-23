@@ -1,4 +1,4 @@
 <header class="bp-header" role="banner">
-  {% if brand.logo_url %}<img src="{{ brand.logo_url }}" alt="{{ brand.display_name }} logo">{% else %}<strong>{{ brand.display_name }}</strong>{% endif %}
+  {% if brand.logo_url %}<img src="{{ brand.logo_url }}" alt="{{ brand.display_name }} logo" onerror="this.replaceWith(Object.assign(document.createElement('strong'),{textContent:this.alt.replace(/ logo$/,'')}))">{% else %}<strong>{{ brand.display_name }}</strong>{% endif %}
   <nav aria-label="Investor navigation"><span>Investors</span></nav>
 </header>

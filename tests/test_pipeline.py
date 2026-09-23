@@ -77,3 +77,11 @@ def test_schema_normalises_short_hex():
            "colors": {k: "#abc" for k in ["primary", "secondary", "background", "surface", "text", "muted_text"]}}
     merged, errors = validate(cfg)
     assert not errors and merged["colors"]["primary"] == "#aabbcc"
+
+
+def test_pdf_brand_book(pipe):
+    res = pipe.build(BRANDS / "kestrel-logistics_guidelines.pdf", auto_fix=True)
+    cfg = res["config"]
+    assert cfg["display_name"] == "Kestrel Logistics"
+    assert cfg["colors"]["primary"] == "#1a3a2e"  # brand identity untouched
+    assert res["report"]["status"] == "pass"

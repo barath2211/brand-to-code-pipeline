@@ -7,6 +7,14 @@
     "writer": "gemma2:9b",
     "embed": "nomic-embed-text"
   },
+  "ollama-small": {
+    "default": "gemma2:2b",
+    "classifier": "gemma2:2b",
+    "reasoning": "deepseek-r1:1.5b",
+    "code": "qwen2.5-coder:1.5b",
+    "writer": "gemma2:2b",
+    "embed": "nomic-embed-text"
+  },
   "openai": {
     "default": "gpt-4o-mini",
     "classifier": "gpt-4o-mini",
@@ -14,6 +22,14 @@
     "code": "gpt-4o-mini",
     "writer": "gpt-4o-mini",
     "embed": "text-embedding-3-small"
+  },
+  "gemini": {
+    "default": "gemini-2.5-flash",
+    "classifier": "gemini-2.5-flash-lite",
+    "reasoning": "gemini-2.5-flash",
+    "code": "gemini-2.5-flash",
+    "writer": "gemini-2.5-flash",
+    "embed": "gemini-embedding-001"
   },
   "anthropic": {
     "default": "claude-haiku-4-5",

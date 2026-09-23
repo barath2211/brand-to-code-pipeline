@@ -29,6 +29,19 @@ class BuildError(Exception):
     pass
 
 
+def read_guidelines(path: Path) -> str:
+    """Brand guidelines as plain text. PDFs (the usual format for brand books) go through pypdf.
+    Image-only PDFs have no text layer; those need OCR or a vision model (see roadmap)."""
+    if path.suffix == ".pdf":
+        from pypdf import PdfReader
+
+        text = "\n".join(page.extract_text() or "" for page in PdfReader(str(path)).pages)
+        if len(text.strip()) < 40:
+            raise BuildError(f"{path.name} has no extractable text (scanned PDF?). Export it with a text layer or use OCR.")
+        return text
+    return path.read_text(encoding="utf-8")
+
+
 def _apply_fixes(cfg: dict, checks: list[dict]) -> list[str]:
     applied: dict[str, str] = {}
     for c in checks:
@@ -57,9 +70,9 @@ class BrandPipeline:
 
     def load(self, source: Path) -> tuple[dict, Optional[str], dict]:
         timings = {}
-        if source.suffix == ".md":
+        if source.suffix in (".md", ".pdf"):
             t = time.perf_counter()
-            text = source.read_text(encoding="utf-8")
+            text = read_guidelines(source)
             client_id = source.stem.replace("_guidelines", "")
             cfg = extract_config(self.client, text, client_id)
             timings["extract_ms"] = round((time.perf_counter() - t) * 1000, 1)

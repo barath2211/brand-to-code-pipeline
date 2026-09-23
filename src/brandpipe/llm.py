@@ -1,10 +1,12 @@
 """Provider-agnostic LLM client.
 
-One interface, three backends:
-  * ollama  - local, self-hosted models (default when an Ollama server is reachable)
-  * openai  - any OpenAI-compatible endpoint (OpenAI, Groq, Together, vLLM, LM Studio)
-  * anthropic - Claude models via the Messages API
-  * mock    - deterministic, offline responses so the demo runs anywhere
+Providers (pick with LLM_PROVIDER or --provider):
+  * ollama        - local, self-hosted models, full-size profile (needs ~16 GB+ RAM)
+  * ollama-small  - local models that fit an 8 GB laptop
+  * openai        - any OpenAI-compatible endpoint (OpenAI, Groq, Together, vLLM, LM Studio)
+  * gemini        - Google Gemini through its OpenAI-compatible endpoint (GEMINI_API_KEY)
+  * anthropic     - Claude models via the Messages API
+  * mock          - deterministic, offline responses so the demo runs anywhere
 
 Models are chosen per *role* (reasoning, code, writer, classifier, embed) rather
 than per call site, so swapping a model is a config change, not a code change.
@@ -40,15 +42,31 @@ def _load_models() -> dict:
         return json.load(fh)
 
 
-def _post_json(url: str, payload: dict, headers: dict, timeout: float = 120) -> dict:
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json", **headers},
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+# provider name -> (backend, base url env, default base url, key env)
+BACKENDS = {
+    "ollama": ("ollama", None, None, None),
+    "ollama-small": ("ollama", None, None, None),
+    "openai": ("openai", "OPENAI_BASE_URL", "https://api.openai.com/v1", "OPENAI_API_KEY"),
+    "gemini": ("openai", "GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai", "GEMINI_API_KEY"),
+    "anthropic": ("anthropic", None, None, "ANTHROPIC_API_KEY"),
+    "mock": ("mock", None, None, None),
+}
+
+
+def _post_json(url: str, payload: dict, headers: dict, timeout: float = 180, retries: int = 5) -> dict:
+    """POST JSON with backoff on rate limits and transient errors (free API tiers hit 429 often)."""
+    data = json.dumps(payload).encode("utf-8")
+    for attempt in range(retries + 1):
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json", **headers}, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            if exc.code not in (429, 500, 502, 503, 529) or attempt == retries:
+                raise
+            wait = float(exc.headers.get("Retry-After") or 0) or min(60, 2 ** (attempt + 2))
+            time.sleep(wait)
+    raise RuntimeError("unreachable")
 
 
 def ollama_available(host: str) -> bool:
@@ -81,14 +99,19 @@ class LLMClient:
         self.models = _load_models()
         self.ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
         self.provider = (provider or os.getenv("LLM_PROVIDER") or self._auto_detect()).lower()
-        if self.provider not in self.models:
-            raise ValueError(f"Unknown provider '{self.provider}'. Options: {list(self.models)}")
+        if self.provider not in self.models or self.provider not in BACKENDS:
+            raise ValueError(f"Unknown provider '{self.provider}'. Options: {list(BACKENDS)}")
+        self.backend, base_env, base_default, key_env = BACKENDS[self.provider]
+        self.base_url = (os.getenv(base_env, base_default) if base_env else "").rstrip("/")
+        self.api_key = os.getenv(key_env, "") if key_env else ""
 
     def _auto_detect(self) -> str:
         if ollama_available(self.ollama_host):
             return "ollama"
         if os.getenv("ANTHROPIC_API_KEY"):
             return "anthropic"
+        if os.getenv("GEMINI_API_KEY"):
+            return "gemini"
         if os.getenv("OPENAI_API_KEY"):
             return "openai"
         return "mock"
@@ -104,25 +127,26 @@ class LLMClient:
         user: str,
         mock: Optional[Callable[[], str]] = None,
         json_mode: bool = False,
+        temperature: float = 0.1,
     ) -> LLMResponse:
         model = self.model_for(role)
         start = time.perf_counter()
-        if self.provider == "mock":
+        if self.backend == "mock":
             text = mock() if mock else "[mock] no mock handler supplied"
-        elif self.provider == "ollama":
-            text = self._ollama_chat(model, system, user, json_mode)
-        elif self.provider == "openai":
-            text = self._openai_chat(model, system, user, json_mode)
+        elif self.backend == "ollama":
+            text = self._ollama_chat(model, system, user, json_mode, temperature)
+        elif self.backend == "openai":
+            text = self._openai_chat(model, system, user, json_mode, temperature)
         else:
-            text = self._anthropic_chat(model, system, user)
+            text = self._anthropic_chat(model, system, user, temperature)
         latency = (time.perf_counter() - start) * 1000
         return LLMResponse(_strip_reasoning(text), model, self.provider, round(latency, 1))
 
-    def _ollama_chat(self, model: str, system: str, user: str, json_mode: bool) -> str:
+    def _ollama_chat(self, model: str, system: str, user: str, json_mode: bool, temperature: float) -> str:
         payload = {
             "model": model,
             "stream": False,
-            "options": {"temperature": 0.1},
+            "options": {"temperature": temperature},
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         }
         if json_mode:
@@ -130,38 +154,35 @@ class LLMClient:
         data = _post_json(f"{self.ollama_host}/api/chat", payload, {})
         return data["message"]["content"]
 
-    def _openai_chat(self, model: str, system: str, user: str, json_mode: bool) -> str:
-        base = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+    def _openai_chat(self, model: str, system: str, user: str, json_mode: bool, temperature: float) -> str:
         payload = {
             "model": model,
-            "temperature": 0.1,
+            "temperature": temperature,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         }
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
-        data = _post_json(
-            f"{base}/chat/completions", payload, {"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"}
-        )
+        data = _post_json(f"{self.base_url}/chat/completions", payload, {"Authorization": f"Bearer {self.api_key}"})
         return data["choices"][0]["message"]["content"]
 
-    def _anthropic_chat(self, model: str, system: str, user: str) -> str:
+    def _anthropic_chat(self, model: str, system: str, user: str, temperature: float) -> str:
         payload = {
             "model": model,
             "max_tokens": 1500,
-            "temperature": 0.1,
+            "temperature": temperature,
             "system": system,
             "messages": [{"role": "user", "content": user}],
         }
         data = _post_json(
             "https://api.anthropic.com/v1/messages",
             payload,
-            {"x-api-key": os.environ["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01"},
+            {"x-api-key": self.api_key, "anthropic-version": "2023-06-01"},
         )
         return "".join(block.get("text", "") for block in data["content"])
 
     # ------------------------------------------------------------- embeddings
     def embed(self, texts: list[str]) -> list[list[float]]:
-        if self.provider == "ollama":
+        if self.backend == "ollama":
             try:
                 data = _post_json(
                     f"{self.ollama_host}/api/embed",
@@ -171,13 +192,12 @@ class LLMClient:
                 return data["embeddings"]
             except (urllib.error.URLError, KeyError):
                 pass  # fall through to local embedding
-        if self.provider == "openai" and os.getenv("OPENAI_EMBEDDINGS", "1") == "1":
+        if self.backend == "openai" and os.getenv("OPENAI_EMBEDDINGS", "1") == "1":
             try:
-                base = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
                 data = _post_json(
-                    f"{base}/embeddings",
+                    f"{self.base_url}/embeddings",
                     {"model": self.model_for("embed"), "input": texts},
-                    {"Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
+                    {"Authorization": f"Bearer {self.api_key}"},
                 )
                 return [row["embedding"] for row in data["data"]]
             except Exception:
